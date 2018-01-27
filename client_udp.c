@@ -19,6 +19,9 @@ int main(int argc, char **argv)
 	int port_num;
 	char temp[5];
 	char client_ip[16];
+	int lower = 0;
+	int upper = 4;
+	array packets[];
     
 	printf("Enter an IP address: ");
 	fgets(client_ip, 16, stdin);
@@ -56,9 +59,41 @@ int main(int argc, char **argv)
     
     /* Receive contents of file (if it exists) from server. */
     //int n = recvfrom(sockfd, buffer, 5000, 0, (struct sockaddr*)&serveraddr, &len);
+
+	while(buffer != nullptr){
+		recievePackets(buffer, lower, upper, packets);
+	}
     
     printf("Got from server: \n :%s: \n", buffer);
     
 	close(sockfd);
 	return 0;
 }
+
+	recievePackets(char buffer, int lower, int upper, array packetRecieved[]){
+		//Check the array to see if the packet has already been recieved.
+
+		//If the packet has been recieved, drop the packet and send a confirmation.  Return();
+
+		//If the packet hasn't been recieved, continue with steps below.
+
+		//Convert buffer to string here
+
+		//Remove first character from string to get packet number
+
+		//check if it is the lower
+
+		//If it is the lower, increment lower and increment upper, add 1 to array
+
+		//Check if the next slot of the array is a 1
+
+		//If it is, increment the lower and upper.  Then check the next value in the array (Use a loop)
+
+		//If not, move on.
+
+		//If it isn't the lower, add a 1 to the array
+
+		//Write buffer to file
+
+		//Send confirmation to server
+	}
