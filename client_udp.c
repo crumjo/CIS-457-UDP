@@ -50,6 +50,10 @@ int main(int argc, char **argv)
 	char client_ip[16];
 	int lower = 0;
 	int upper = 4;
+<<<<<<< HEAD
+=======
+	char packets[];
+>>>>>>> 392a3563416933caf3ce14b2005fe00f0ad3a915
     
 	printf("Enter an IP address: ");
 	fgets(client_ip, 16, stdin);
@@ -99,3 +103,34 @@ int main(int argc, char **argv)
 	close(sockfd);
 	return 0;
 }
+<<<<<<< HEAD
+=======
+
+	recievePackets(char buffer, int lower, int upper, char packetRecieved[]){
+		//Check the array to see if the packet has already been recieved.
+
+		//If the packet has been recieved, drop the packet and send a confirmation.  Return();
+
+		//If the packet hasn't been recieved, continue with steps below.
+
+		//Convert buffer to string here
+
+		//Remove first character from string to get packet number
+
+		//check if it is the lower
+
+		//If it is the lower, increment lower and increment upper, add 1 to array
+
+		//Check if the next slot of the array is a 1
+
+		//If it is, increment the lower and upper.  Then check the next value in the array (Use a loop)
+
+		//If not, move on.
+
+		//If it isn't the lower, add a 1 to the array
+
+		//Write buffer to file
+
+		//Send confirmation to server
+	}
+>>>>>>> 392a3563416933caf3ce14b2005fe00f0ad3a915
