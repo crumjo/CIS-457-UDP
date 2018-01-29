@@ -15,6 +15,11 @@
 
 int main(int argc, char **argv)
 {
+	char packetTrack[];
+	char confirmedTrack[];
+	int lower = 0;
+	int upper = 4;
+
 	int port_num;
 	char temp[5];
 	printf("Enter a port number: ");
@@ -61,3 +66,20 @@ int main(int argc, char **argv)
 
 	return 0;
 }
+
+	int packetTrack(char packetArray[], char confirmedPacketArray[]){
+		//Place a 1 in packetArray for the packet being sent
+
+		//Place the int value of the packet at the beginning of the packet
+
+		//Send the packet
+
+		//If a reply hasn't been recieved in 5 seconds, resend packet
+
+		//If a confirmation comes back for a packet, place a 1 in the confirmedPacketArray,
+		//check if the confirmed packet is equal to the lower bound of the window,
+		//if it is, increment lower and check if there is a 1 in the confirmedPacketArray,
+		//if there is, incrment lower again and loop till confirmedPacketArray has a zero
+
+		return 0;
+	}

@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 	char client_ip[16];
 	int lower = 0;
 	int upper = 4;
-	array packets[];
+	char packets[];
     
 	printf("Enter an IP address: ");
 	fgets(client_ip, 16, stdin);
@@ -70,7 +70,7 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-	recievePackets(char buffer, int lower, int upper, array packetRecieved[]){
+	recievePackets(char buffer, int lower, int upper, char packetRecieved[]){
 		//Check the array to see if the packet has already been recieved.
 
 		//If the packet has been recieved, drop the packet and send a confirmation.  Return();
