@@ -14,6 +14,35 @@
 
 
 
+//recievePackets(char buffer, int lower, int upper, array packetRecieved[]){
+//    //Check the array to see if the packet has already been recieved.
+//
+//    //If the packet has been recieved, drop the packet and send a confirmation.  Return();
+//
+//    //If the packet hasn't been recieved, continue with steps below.
+//
+//    //Convert buffer to string here
+//
+//    //Remove first character from string to get packet number
+//
+//    //check if it is the lower
+//
+//    //If it is the lower, increment lower and increment upper, add 1 to array
+//
+//    //Check if the next slot of the array is a 1
+//
+//    //If it is, increment the lower and upper.  Then check the next value in the array (Use a loop)
+//
+//    //If not, move on.
+//
+//    //If it isn't the lower, add a 1 to the array
+//
+//    //Write buffer to file
+//
+//    //Send confirmation to server
+//}
+
+
 int main(int argc, char **argv)
 {
 	int port_num;
@@ -21,7 +50,6 @@ int main(int argc, char **argv)
 	char client_ip[16];
 	int lower = 0;
 	int upper = 4;
-	array packets[];
     
 	printf("Enter an IP address: ");
 	fgets(client_ip, 16, stdin);
@@ -37,7 +65,7 @@ int main(int argc, char **argv)
     
     printf("Enter a file name: ");
 	char fname[32];
-	char buffer[5000];
+    char *buffer = (char*) malloc (1042 * sizeof(char));
     
     /* Flush stdin. */
     char tmp[16];
@@ -45,14 +73,14 @@ int main(int argc, char **argv)
     fgets(fname, 32, stdin);
     
     /* Remove trailing newline. */
-    int l = strlen(fname);
+    int l = (int)strlen(fname);
     if (fname[l - 1] == '\n') {
         fname[l - 1] = '\0';
     }
     
     printf("\nYou requested the file: %s\n", fname);
     
-	int len = sizeof serveraddr;
+	socklen_t len = sizeof serveraddr;
     
     /* Send file name request to server. */
 	sendto(sockfd, fname, strlen(fname) + 1, 0, (struct sockaddr*)&serveraddr, sizeof(serveraddr));
@@ -60,40 +88,14 @@ int main(int argc, char **argv)
     /* Receive contents of file (if it exists) from server. */
     //int n = recvfrom(sockfd, buffer, 5000, 0, (struct sockaddr*)&serveraddr, &len);
 
-	while(buffer != nullptr){
-		recievePackets(buffer, lower, upper, packets);
-	}
+//    while(buffer != NULL){
+//        recievePackets(buffer, lower, upper, packets);
+//    }
+    
+    long n = recvfrom(sockfd, buffer, 1024, 0, (struct sockaddr*)&serveraddr, &len);
     
     printf("Got from server: \n :%s: \n", buffer);
-    
+    free(buffer);
 	close(sockfd);
 	return 0;
 }
-
-	recievePackets(char buffer, int lower, int upper, array packetRecieved[]){
-		//Check the array to see if the packet has already been recieved.
-
-		//If the packet has been recieved, drop the packet and send a confirmation.  Return();
-
-		//If the packet hasn't been recieved, continue with steps below.
-
-		//Convert buffer to string here
-
-		//Remove first character from string to get packet number
-
-		//check if it is the lower
-
-		//If it is the lower, increment lower and increment upper, add 1 to array
-
-		//Check if the next slot of the array is a 1
-
-		//If it is, increment the lower and upper.  Then check the next value in the array (Use a loop)
-
-		//If not, move on.
-
-		//If it isn't the lower, add a 1 to the array
-
-		//Write buffer to file
-
-		//Send confirmation to server
-	}

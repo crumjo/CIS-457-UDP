@@ -1,6 +1,6 @@
 /*
  * UDP Server that echos client input.
- * 
+ *
  * @author Joshua Crum
  */
 
@@ -10,11 +10,14 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include "file_utils.h"
 
 
 
 int main(int argc, char **argv)
 {
+    static int window_size = 5;
+    int *send_buffer = (int*) malloc (5000 * sizeof(int));
 	int port_num;
 	char temp[5];
 	printf("Enter a port number: ");
@@ -37,8 +40,7 @@ int main(int argc, char **argv)
 	while (1) {
 		socklen_t len = sizeof(clientaddr);
 		char fname[32];
-        char fcont[5000];
-		int n = recvfrom(sockfd, fname, 32, 0, (struct sockaddr*)&clientaddr, &len);
+		long n = recvfrom(sockfd, fname, 32, 0, (struct sockaddr*)&clientaddr, &len);
 
 		/* Checks for any recv error, not just timeout. */
 		if (n == -1) {
@@ -50,7 +52,9 @@ int main(int argc, char **argv)
             /* Check if file exists and then send its contents. */
             if (access(fname, F_OK) != -1) {
                 /* File exists. */
-                sendto(sockfd, fname, strlen(fname) + 1, 0, (struct sockaddr*)&clientaddr, sizeof(clientaddr));
+                char *buffer = (char*) malloc (1024 * sizeof(char));
+                int size = read_file(fname, &buffer);
+                sendto(sockfd, buffer, size, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
             }
             else {
                 /* Does not exist. */
@@ -58,6 +62,5 @@ int main(int argc, char **argv)
             }
 		}
 	}
-
-	return 0;
+    return 0;
 }
