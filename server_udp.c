@@ -16,16 +16,15 @@
 
 int main(int argc, char **argv)
 {
-<<<<<<< HEAD
+
     static int window_size = 5;
     int *send_buffer = (int*) malloc (5000 * sizeof(int));
-=======
+
 	char packetTrack[];
 	char confirmedTrack[];
 	int lower = 0;
 	int upper = 4;
 
->>>>>>> 392a3563416933caf3ce14b2005fe00f0ad3a915
 	int port_num;
 	char temp[5];
 	printf("Enter a port number: ");

@@ -10,6 +10,8 @@
 		03290B9C201EE1B00052C480 /* server_udp.c in Sources */ = {isa = PBXBuildFile; fileRef = 03290B98201EE1B00052C480 /* server_udp.c */; };
 		03290B9D201EE1B00052C480 /* client_udp.c in Sources */ = {isa = PBXBuildFile; fileRef = 03290B9A201EE1B00052C480 /* client_udp.c */; };
 		03290B9E201EE1B00052C480 /* file_utils.c in Sources */ = {isa = PBXBuildFile; fileRef = 03290B9B201EE1B00052C480 /* file_utils.c */; };
+		0341D9D5201FD63F00BD6587 /* testServer.c in Sources */ = {isa = PBXBuildFile; fileRef = 0341D9D4201FD63F00BD6587 /* testServer.c */; };
+		0341D9D7201FD92F00BD6587 /* testClient.c in Sources */ = {isa = PBXBuildFile; fileRef = 0341D9D6201FD92F00BD6587 /* testClient.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -30,6 +32,8 @@
 		03290B99201EE1B00052C480 /* file_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = file_utils.h; path = ../../file_utils.h; sourceTree = "<group>"; };
 		03290B9A201EE1B00052C480 /* client_udp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = client_udp.c; path = ../../client_udp.c; sourceTree = "<group>"; };
 		03290B9B201EE1B00052C480 /* file_utils.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = file_utils.c; path = ../../file_utils.c; sourceTree = "<group>"; };
+		0341D9D4201FD63F00BD6587 /* testServer.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = testServer.c; sourceTree = "<group>"; };
+		0341D9D6201FD92F00BD6587 /* testClient.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = testClient.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,6 +70,8 @@
 				03290B9B201EE1B00052C480 /* file_utils.c */,
 				03290B98201EE1B00052C480 /* server_udp.c */,
 				03290B99201EE1B00052C480 /* file_utils.h */,
+				0341D9D4201FD63F00BD6587 /* testServer.c */,
+				0341D9D6201FD92F00BD6587 /* testClient.c */,
 			);
 			path = UDP_File_Transfer;
 			sourceTree = "<group>";
@@ -127,6 +133,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0341D9D5201FD63F00BD6587 /* testServer.c in Sources */,
+				0341D9D7201FD92F00BD6587 /* testClient.c in Sources */,
 				03290B9D201EE1B00052C480 /* client_udp.c in Sources */,
 				03290B9E201EE1B00052C480 /* file_utils.c in Sources */,
 				03290B9C201EE1B00052C480 /* server_udp.c in Sources */,
