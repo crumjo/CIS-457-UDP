@@ -16,6 +16,8 @@
 
 int main(int argc, char **argv)
 {
+    const int window_size = 5;
+    const int max_packet_size = 1024;
     int port_num;
     char temp[5];
     
@@ -60,6 +62,16 @@ int main(int argc, char **argv)
                 double r = ((double) file_len / 1024) + 1;
                 char tmp[1024];
                 char ack[3];
+                
+                /* Send initial size packet. */
+                double num_packets = file_len / max_packet_size;
+                char *initial = (char*) malloc (file_len + sizeof(num_packets));
+                sprintf(initial, "%d", (int)num_packets);
+                strcat(initial, "/");
+                sprintf(initial + strlen(initial), "%ld", file_len);
+                sendto(sockfd, initial, (strlen(initial) * sizeof(char)), 0, (struct sockaddr*) & clientaddr, sizeof(clientaddr));
+                printf("Initial :%s:\n", initial);
+                free(initial);
                 
                 while (fread(tmp, 1, 1024, file) == 1024) {
                     sendto(sockfd, tmp, 1024, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));

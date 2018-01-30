@@ -16,6 +16,7 @@
 
 int main(int argc, char **argv)
 {
+    const int window_size = 5;
     int port_num;
     char temp[5];
     char client_ip[16];
@@ -73,7 +74,19 @@ int main(int argc, char **argv)
         
     /* Read byte array from server to buffer. */
     int i = 1;
+    int i_size = 32 * sizeof(char);
     char *ack = (char*) malloc(3 * sizeof(char));
+    char *initial = (char*) malloc(i_size);
+    recvfrom(sockfd, initial, i_size, 0, (struct sockaddr*) &serveraddr, &len);
+    
+    char *s_num_packets, *s_file_length;
+    s_num_packets = strtok(initial, "/");
+    s_file_length = strtok(NULL, "/");
+    int num_packets = atoi(s_num_packets);
+    int file_length = atoi(s_file_length);
+        
+    free(initial);
+    
     ssize_t bytes_recv;
     
     while((bytes_recv = recvfrom(sockfd, tmp, 1024, 0, (struct sockaddr*) &serveraddr, &len)) != -1) {
