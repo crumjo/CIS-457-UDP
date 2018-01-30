@@ -51,8 +51,6 @@ int main(int argc, char **argv)
         fname[l - 1] = '\0';
     }
     
-    printf("\nYou requested the file: %s\n", fname);
-    
     socklen_t len = sizeof(serveraddr);
     
     /* Send file name request to server. */
@@ -77,20 +75,15 @@ int main(int argc, char **argv)
     int i = 1;
     char *ack = (char*) malloc(3 * sizeof(char));
     ssize_t bytes_recv;
+    
     while((bytes_recv = recvfrom(sockfd, tmp, 1024, 0, (struct sockaddr*) &serveraddr, &len)) != -1) {
         sprintf(ack,"%d", i);
-        printf("ACK: %s\n", ack);
         fwrite(tmp, 1, bytes_recv, file);
         i++;
         sendto(sockfd, ack, 4, 0, (struct sockaddr*)&serveraddr, sizeof(serveraddr));
     }
     
     free(ack);
-    
-//    recvfrom(sockfd, buffer, 1000000, 0, (struct sockaddr*) &serveraddr, &len);
-//    int buf_size = 1000000;
-//    fwrite(buffer, 1, buf_size, file);
-
     fclose(file);
     close(sockfd);
     return 0;

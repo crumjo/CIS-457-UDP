@@ -66,16 +66,9 @@ int main(int argc, char **argv)
                     
                     /* Wait until ack. */
                     recvfrom(sockfd, ack, 3, 0, (struct sockaddr*) &clientaddr, &len);
-                    //printf("ACK: %s\n", ack);
                 }
                 
                 sendto(sockfd, tmp, r, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
-                
-//                char *buffer = (char*) malloc ((len + 1) * sizeof(char));
-//                fread(buffer, len, 1, file);
-//                fclose(file);
-//
-//                sendto(sockfd, buffer, len + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
                 
             }
             else {
