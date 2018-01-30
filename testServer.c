@@ -24,6 +24,7 @@ int main(int argc, char **argv)
     port_num = atoi(temp);
     
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    
     struct timeval timeout;
     timeout.tv_sec = 5;
     timeout.tv_usec = 0;
@@ -53,14 +54,29 @@ int main(int argc, char **argv)
                 
                 /* Get file length. */
                 fseek(file, 0, SEEK_END);
-                long len = ftell(file);
+                long file_len = ftell(file);
                 rewind(file);
                 
-                char *buffer = (char*) malloc ((len + 1) * sizeof(char));
-                fread(buffer, len, 1, file);
-                fclose(file);
+                double r = ((double) file_len / 1024) + 1;
+                char tmp[1024];
+                char ack[3];
                 
-                sendto(sockfd, buffer, len + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
+                while (fread(tmp, 1, 1024, file) == 1024) {
+                    sendto(sockfd, tmp, 1024, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
+                    
+                    /* Wait until ack. */
+                    recvfrom(sockfd, ack, 3, 0, (struct sockaddr*) &clientaddr, &len);
+                    //printf("ACK: %s\n", ack);
+                }
+                
+                sendto(sockfd, tmp, r, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
+                
+//                char *buffer = (char*) malloc ((len + 1) * sizeof(char));
+//                fread(buffer, len, 1, file);
+//                fclose(file);
+//
+//                sendto(sockfd, buffer, len + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
+                
             }
             else {
                 printf("The file '%s' could not be found.\n", fname);

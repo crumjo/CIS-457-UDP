@@ -26,7 +26,12 @@ int main(int argc, char **argv)
     fgets(temp, 5, stdin);
     port_num = atoi(temp);
     
+    struct timeval timeout;
+    timeout.tv_sec = 2;
+    timeout.tv_usec = 0;
+
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
     struct sockaddr_in serveraddr;
     serveraddr.sin_family = AF_INET;
     serveraddr.sin_port = htons(port_num);
@@ -36,8 +41,8 @@ int main(int argc, char **argv)
     char fname[32];
     
     /* Flush stdin. */
-    char tmp[16];
-    fgets(tmp, 16, stdin);
+    char tmp_name[16];
+    fgets(tmp_name, 16, stdin);
     fgets(fname, 32, stdin);
     
     /* Remove trailing newline. */
@@ -66,14 +71,27 @@ int main(int argc, char **argv)
 
     /* Create a new file with user input. */
     FILE *file = fopen(new_file, "wb");
-    char *buffer = (char*) malloc (1024 * sizeof(char));
-    
+    char tmp[1024];
+        
     /* Read byte array from server to buffer. */
-    recvfrom(sockfd, buffer, 1000000, 0, (struct sockaddr*) &serveraddr, &len);
-    int buf_size = 1000000;
-    fwrite(buffer, 1, buf_size, file);
-    fclose(file);
+    int i = 1;
+    char *ack = (char*) malloc(3 * sizeof(char));
+    ssize_t bytes_recv;
+    while((bytes_recv = recvfrom(sockfd, tmp, 1024, 0, (struct sockaddr*) &serveraddr, &len)) != -1) {
+        sprintf(ack,"%d", i);
+        printf("ACK: %s\n", ack);
+        fwrite(tmp, 1, bytes_recv, file);
+        i++;
+        sendto(sockfd, ack, 4, 0, (struct sockaddr*)&serveraddr, sizeof(serveraddr));
+    }
     
+    free(ack);
+    
+//    recvfrom(sockfd, buffer, 1000000, 0, (struct sockaddr*) &serveraddr, &len);
+//    int buf_size = 1000000;
+//    fwrite(buffer, 1, buf_size, file);
+
+    fclose(file);
     close(sockfd);
     return 0;
 }
