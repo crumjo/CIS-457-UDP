@@ -11,10 +11,11 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include "file_utils.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+
 
 #pragma pack(1)
 struct packet {
@@ -22,6 +23,7 @@ struct packet {
 	char buffer[1024];
 };
 #pragma pack(0)
+
 
 int main(int argc, char **argv)
 {
@@ -64,69 +66,50 @@ int main(int argc, char **argv)
 				int len;
 
 				if(stat(fname, &st) == 0) {
-					len = st.st_size;
+                    
+                    int packet_num = 0;
+                    int window_size = 5;
+                    int packet_info [4] = {-1, len, len/1024, window_size};
+                    struct packet msg;
+                    
+                    printf("File found: %s\n", fname);
+                    len = st.st_size;
+                    FILE *in_file = fopen(fname, "rb");
+                    
+                    /* Calculate file size. */
+                    fseek(in_file, 0, SEEK_END);
+                    long fsize = ftell(in_file);
+                    rewind(in_file);
+                    
+                    /* Get file length. */
+                    if(stat(fname, &st) == 0) {
+                        len = st.st_size;
+                    }
+                    
+                    /* Read file into buffer. */
+                    char *buffer = (char *) malloc (fsize + 1);
+                    fread(buffer, fsize, 1, in_file);
+                    fclose(in_file);
+                    
+                    /* Buffer that holds all packets. */
+                    struct packet *packet_buf = (struct packet *) malloc (packet_info[2] * sizeof(packet_info));
+                    
+                    /* Split buffer into packet structs and put in packet_buf. */
+                    
+                    
+                    free(packet_buf);
+                    free(buffer);
+                    
+                    /* Send packet_info. */
+                    
+                    /* Sliding window here. */
 				}
-				char temp_buf [1024];
-				int packet_num = 0;
-				int window_size = 5;
-				int packet_info [4] = {-1, len, len/1024, window_size};
-				struct packet msg;
-
-				//printf("%s contains %d bytes for %d packets\n", fname, len, len/1024+1);
-				sendto(sockfd, packet_info, sizeof(int)*4, 0, (struct sockaddr*)&clientaddr, sizeof(clientaddr));
-				if (packet_info[1] > 1024)
-				{
-					while (packet_num <= packet_info[2])
-					{
-						
-						for (int i = packet_num; i < packet_num + window_size; i++)
-						{
-							msg.p_num = i;
-							fseek(file, packet_num*1024, SEEK_SET);
-							fread(msg.buffer, sizeof(msg.buffer), 1024, file);
-							
-							sendto(sockfd,&msg,sizeof(struct packet)+1,0,(struct sockaddr*)&clientaddr,sizeof(clientaddr));
-						}
-						n = recvfrom(sockfd, &packet_num, sizeof(int), 0, (struct sockaddr*) &clientaddr, &clen);
-						printf("%d\n", packet_num);
-						if (n==-1)
-						{
-							fseek(file, packet_info[2]*1024, SEEK_SET);
-							fread(msg.buffer, sizeof(msg.buffer), len-packet_info[2]*1024, file);
-							sendto(sockfd,&msg,sizeof(struct packet)+1,0,(struct sockaddr*)&clientaddr,sizeof(clientaddr));
-							break;
-						}
-						
-					}
-				}
-				else
-				{
-					fread(temp_buf, 1024, packet_info[1], file);
-					sendto(sockfd, temp_buf, 1024+1, 0, (struct sockaddr*)&clientaddr, sizeof(clientaddr));
-				}
-				fclose(file);
+				
 			}
 			else {
 				printf("The file '%s' could not be found.\n", fname);
 			}
-			
 		}
 	}
 	return 0;
-	}
-
-
-
- /*
-		FILE *file = fopen(fname, "rb");
-                
-                fseek(file, 0, SEEK_END);
-                long len = ftell(file);
-                rewind(file);
-                
-                char *buffer = (char*) malloc ((len + 1) * sizeof(char));
-                fread(buffer, len, 1, file);
-                fclose(file);
-                
-                sendto(sockfd, buffer, len + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
-		*/
+}
