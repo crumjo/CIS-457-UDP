@@ -76,17 +76,13 @@ int main(int argc, char **argv)
 	{
 		while (packet_num <= packet_info[2])
 		{
-			long x = recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
+			recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
 			
 			if (packet_num == msg.p_num)
 			{
 				packet_num++;
 				sendto(sockfd, &msg.p_num, sizeof(int) + 1, 0, (struct sockaddr*)&serveraddr, sizeof(serveraddr));
-				packet_storage[msg.p_num] = msg.buffer;
-			}
-			else if (x == -1)
-			{
-				break;
+				fwrite(msg.buffer, sizeof(char), sizeof(msg.buffer), file);
 			}
 			else
 			{
@@ -94,22 +90,12 @@ int main(int argc, char **argv)
 			}
 				
 		}
-		long n = recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
-		if (n == -1)
-		{
-			packet_num++;
-			sendto(sockfd, &msg.p_num, sizeof(int) + 1, 0, (struct sockaddr*)&serveraddr, sizeof(serveraddr));
-			packet_storage[msg.p_num] = msg.buffer;
-		}
-		}
-		
+		sendto(sockfd, &msg.p_num, sizeof(int) + 1, 0, (struct sockaddr*)&serveraddr, sizeof(serveraddr));
+
+	}
 	else
 	{
 		printf("Packet less than 1024\n");
-	}
-	for (int i = 0; i < packet_info[2];i++)
-	{
-		fwrite(packet_storage[i], sizeof(char), sizeof(packet_storage[i]), file);
 	}
 	fclose(file);
 	close(sockfd);
