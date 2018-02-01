@@ -20,9 +20,10 @@
 #pragma pack(1)
 struct packet {
 	int p_num;
-	char buffer[1024];
+	char *buffer;
 };
 #pragma pack(0)
+
 
 
 int main(int argc, char **argv)
@@ -61,20 +62,21 @@ int main(int argc, char **argv)
 
 			if (access(fname, F_OK) != -1) {
 
-				FILE *file = fopen(fname, "rb");
+				FILE *in_file = fopen(fname, "rb");
 				struct stat st;
 				int len;
 
 				if(stat(fname, &st) == 0) {
                     
-                    int packet_num = 0;
+                    const int data_size = 1024;
+//                    int packet_num = 0;
+                    int num_packets = 0;
+                    int rem = 0;
                     int window_size = 5;
-                    int packet_info [4] = {-1, len, len/1024, window_size};
-                    struct packet msg;
+                    struct packet tmp_packet;
                     
                     printf("File found: %s\n", fname);
                     len = st.st_size;
-                    FILE *in_file = fopen(fname, "rb");
                     
                     /* Calculate file size. */
                     fseek(in_file, 0, SEEK_END);
@@ -86,21 +88,81 @@ int main(int argc, char **argv)
                         len = st.st_size;
                     }
                     
+                    /* Create initial packet. Considers packet with less than 1024 size at end. */
+                    if (fsize % data_size != 0) {
+                        num_packets = fsize / data_size;
+                        rem = fsize - (num_packets * data_size);
+                        num_packets++;
+                    }
+                    else {
+                        num_packets = fsize / data_size;
+                    }
+                    
+                    int packet_info [4] = {-1, fsize, num_packets, window_size};
+                    
                     /* Read file into buffer. */
                     char *buffer = (char *) malloc (fsize + 1);
                     fread(buffer, fsize, 1, in_file);
                     fclose(in_file);
                     
-                    /* Buffer that holds all packets. */
-                    struct packet *packet_buf = (struct packet *) malloc (packet_info[2] * sizeof(packet_info));
+                    /* Buffer that holds five packets. */
+//                    struct packet *tmp_buf = (struct packet *) malloc (5 * sizeof(struct packet));
+                    
+                    /* Send initial packet information. */
+                    printf("%d packet #, %d bytes, %d total packets, %d window size\n",
+                           packet_info[0], packet_info[1], packet_info[2], packet_info[3]);
+                    sendto(sockfd, packet_info, sizeof(int) * 4, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
                     
                     /* Split buffer into packet structs and put in packet_buf. */
+                    char *c_packet_num = (char *) malloc (sizeof(int));
                     
+                    /* Make sure server is sending correctly. */
+                    FILE *test = fopen("test.pdf", "wb");
                     
-                    free(packet_buf);
+                    for (int i = 0; i < num_packets; i++) {
+                        
+                        /* Check if last packet with remainder. */
+                        if (rem != 0 && i == (num_packets)) {
+                            printf("Remainder: %d\n", rem);
+                            
+                            tmp_packet.p_num = i;
+                            tmp_packet.buffer = (char *) malloc (rem * sizeof(char) + 1);
+                            
+//                            strncpy(tmp_packet.buffer, buffer + (i * data_size), rem);
+                            memcpy(tmp_packet.buffer, &buffer[i * data_size], rem * sizeof(char));
+                            
+//                            printf("Temp buf :%s:\n", tmp_packet.buffer);
+                            
+                            sendto(sockfd, tmp_packet.buffer, strlen(tmp_packet.buffer) + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
+                            
+                            fwrite(tmp_packet.buffer, strlen(tmp_packet.buffer), 1, test);
+                        }
+                        else {
+    
+                            tmp_packet.p_num = i;
+                            tmp_packet.buffer = (char *) malloc (1025 * sizeof(char));
+                            
+//                            strncpy(tmp_packet.buffer, buffer + (i * data_size), data_size);
+                            memcpy(tmp_packet.buffer, &buffer[i * data_size], data_size * sizeof(char));
+                            
+//                            printf("Temp buf :%s:\n", tmp_packet.buffer);
+                            
+                            sendto(sockfd, tmp_packet.buffer, strlen(tmp_packet.buffer) + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
+                            
+                            fwrite(tmp_packet.buffer, strlen(tmp_packet.buffer), 1, test);
+                        }
+//                        printf("Temp buf :%s:\n", tmp_packet.buffer);
+                        /* Wait for packet number confirmation. */
+                        recvfrom(sockfd, c_packet_num, sizeof(int), 0, (struct sockaddr*) &clientaddr, &clen);
+                        printf("c_packet_num :%s:\n", c_packet_num);
+                        int curr_packet_num = atoi(c_packet_num);
+                        printf("Got packet: %d\n", curr_packet_num);
+                        free(tmp_packet.buffer);
+                    }
+                    
+                    fclose(test);
+//                    free(tmp_buf);
                     free(buffer);
-                    
-                    /* Send packet_info. */
                     
                     /* Sliding window here. */
 				}

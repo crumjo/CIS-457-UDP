@@ -55,12 +55,22 @@ int main(int argc, char **argv)
 		fname[l - 1] = '\0';
 	}
 
-    printf("You requested the file :%s:\n", fname);
+//    printf("You requested the file :%s:\n", fname);
 
 	socklen_t len = sizeof(serveraddr);
 
 	/* Send file name request to server. */
-	sendto(sockfd, fname, strlen(fname) + 1, 0, (struct sockaddr*)&serveraddr, sizeof(serveraddr));
+	sendto(sockfd, fname, strlen(fname) + 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
+    
+    /* Receive packet information. */
+    int packet_info[4];
+//    int packet_num = 0;
+    recvfrom(sockfd, packet_info, sizeof(int) * 4 + 1, 0, (struct sockaddr*) &serveraddr, &len);
+    printf("%d packet #, %d bytes, %d total packets, %d window size\n",
+           packet_info[0], packet_info[1], packet_info[2], packet_info[3]);
+    
+    /* Get size of window. */
+//    int window_size = packet_info[3];
     
     printf("Enter a new file name with proper extension: ");
     char nfname[32];
@@ -72,7 +82,24 @@ int main(int argc, char **argv)
     }
 
     FILE *out_file = fopen(nfname, "wb");
+    char *buffer = (char *) malloc (packet_info[1] + 1);
+    char *tmp_buffer = (char *) malloc (1025);
+    char *index = (char *) malloc (1);
     
+    for (int i = 0; i < packet_info[2]; i++) {
+        recvfrom(sockfd, tmp_buffer, 1025, 0, (struct sockaddr*) &serveraddr, &len);
+        strcat(buffer, tmp_buffer);
+//        printf("Temp buf :%s:\n", tmp_buffer);
+        sprintf(index, "%d", i);
+//        printf("Index :%s:\n", index);
+        sendto(sockfd, index, strlen(index) + 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
+    }
+    
+    fwrite(buffer, packet_info[1], 1, out_file);
+    
+    free(index);
+    free(tmp_buffer);
+    free(buffer);
     fclose(out_file);
     close(sockfd);
 	return 0;
