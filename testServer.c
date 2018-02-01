@@ -85,15 +85,15 @@ int main(int argc, char **argv)
                     if (packet_info[1] - i*1024 > 1024)
                     {
                         fread(msg.buffer, sizeof(char), 1024, file);
-                        printf("%s", msg.buffer);
-                        printf("\n\n%d\n\n", i);
+//                        printf("%s", msg.buffer);
+//                        printf("\n\n%d\n\n", i);
                     }
                     else
                     {
                         printf("last packet");
                         fread(msg.buffer, sizeof(char), packet_info[1]-i*1024, file);
-                        printf("%s", msg.buffer);
-                        printf("\n\n%d\n\n", i);
+//                        printf("%s", msg.buffer);
+//                        printf("\n\n%d\n\n", i);
                     }
                     sendto(sockfd, &msg, sizeof(struct packet)+1, 0, (struct sockaddr*)&clientaddr, sizeof(clientaddr));
                 }

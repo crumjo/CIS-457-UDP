@@ -67,6 +67,19 @@ int main(int argc, char **argv)
 	printf("%d packet #, %d bytes, %d total packets, %d window size\n",
 		packet_info[0], packet_info[1], packet_info[2], packet_info[3]);
 
+    /* User input for new file. */
+//    printf("Enter a new file name with proper extension: ");
+//    char nfname[32];
+//    fgets(nfname, 32, stdin);
+//
+//    int nf_len = (int)strlen(nfname);
+//    if (nfname[nf_len - 1] == '\n') {
+//        nfname[nf_len - 1] = '\0';
+//    }
+//
+//    printf("You entered :%s:\n", nfname);
+//    ^^^ Why does this commented code break the program?
+    
 	FILE* file = fopen("temp.pdf", "wb");
 
     for (int i = 0; i < packet_info[2]; i++)
