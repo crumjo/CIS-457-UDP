@@ -35,6 +35,14 @@ int main(int argc, char **argv)
 	fgets(tmp_port, 5, stdin);
 	port_num = atoi(tmp_port);
 
+    while(tmp_port < 1023 || tmp_port > 49152) {
+        if (tmp_port < 1023 || tmp_port > 49152) {
+            printf("Please enter a valid port between 1023 and 49152");
+            fgets(tmp_port, 5, stdin);
+            port_num = atoi(tmp_port);
+        }
+    }
+
 	int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 	struct sockaddr_in serveraddr;
 	serveraddr.sin_family = AF_INET;
