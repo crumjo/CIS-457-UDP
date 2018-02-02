@@ -87,8 +87,8 @@ int main(int argc, char **argv)
 				int packet_info [4] = {-1, fsize, num_packets, window_size};
 				struct packet msg;
 
-				printf("%s contains %d bytes for %d packets\n", fname, packet_info[1], packet_info[2]);
-				sendto(sockfd, packet_info, sizeof(int) * 4 + 1, 0, (struct sockaddr*)&clientaddr, sizeof(clientaddr));
+				printf("%s contains %d bytes for %d packets\n", fname, fsize, num_packets);
+				sendto(sockfd, packet_info, sizeof(int) * 4 + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
 
 
 
