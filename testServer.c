@@ -64,25 +64,38 @@ int main(int argc, char **argv)
 
 				FILE *file = fopen(fname, "rb");
 				struct stat st;
-				int len;
+				int fsize = 0;
 
 				if(stat(fname, &st) == 0)
 				{
-					len = st.st_size;
+					fsize = st.st_size;
 				}
-                int packet_num;
-				int window_size = 5;
-				int packet_info [4] = {-1, len, len/1024+1, window_size};
+                
+                int packet_num = 0;
+                int rem = 0;
+                int window_size = 5;
+                int num_packets = (fsize / 1024);
+                
+                /* Calculate remainder. */
+                if (fsize % 1024 != 0)
+                {
+                    rem = fsize - (num_packets * 1024);
+                    num_packets++;
+                    printf("Remainder: %d\n", rem);
+                }
+                
+				int packet_info [4] = {-1, fsize, num_packets, window_size};
 				struct packet msg;
 
 				printf("%s contains %d bytes for %d packets\n", fname, packet_info[1], packet_info[2]);
-				sendto(sockfd, packet_info, sizeof(int)*4+1, 0, (struct sockaddr*)&clientaddr, sizeof(clientaddr));
+				sendto(sockfd, packet_info, sizeof(int) * 4 + 1, 0, (struct sockaddr*)&clientaddr, sizeof(clientaddr));
 
 
 
                 for (int i = 0; i < packet_info[2]; i++)
                 {
-                    if (packet_info[1] - i*1024 > 1024)
+                    
+                    if (fsize - i * 1024 > 1024)
                     {
                         fread(msg.buffer, sizeof(char), 1024, file);
 //                        printf("%s", msg.buffer);
@@ -90,8 +103,8 @@ int main(int argc, char **argv)
                     }
                     else
                     {
-                        printf("last packet");
-                        fread(msg.buffer, sizeof(char), packet_info[1]-i*1024, file);
+                        printf("Last packet.\n");
+                        fread(msg.buffer, sizeof(char), rem, file);
 //                        printf("%s", msg.buffer);
 //                        printf("\n\n%d\n\n", i);
                     }

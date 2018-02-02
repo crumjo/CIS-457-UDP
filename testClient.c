@@ -59,13 +59,15 @@ int main(int argc, char **argv)
 	socklen_t len = sizeof(serveraddr);
 
 	/* Send file name request to server. */
-	sendto(sockfd, fname, strlen(fname) + 1, 0, (struct sockaddr*)&serveraddr, sizeof(serveraddr));
+	sendto(sockfd, fname, strlen(fname) + 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
 	int packet_info[4];
 	struct packet msg;
 
-	recvfrom(sockfd, packet_info, sizeof(int)*4+1, 0, (struct sockaddr*) &serveraddr, &len);
-	printf("%d packet #, %d bytes, %d total packets, %d window size\n",
-		packet_info[0], packet_info[1], packet_info[2], packet_info[3]);
+	recvfrom(sockfd, packet_info, sizeof(int) * 4 + 1, 0, (struct sockaddr*) &serveraddr, &len);
+    int fsize = packet_info[1];
+    int num_packets = packet_info[2];
+    int window = packet_info[3];
+	printf("%d packet #, %d bytes, %d total packets, %d window size\n", packet_info[0], fsize, num_packets, window);
 
     /* User input for new file. */
 //    printf("Enter a new file name with proper extension: ");
