@@ -108,7 +108,7 @@ int main(int argc, char **argv)
 //                        printf("%s", msg.buffer);
 //                        printf("\n\n%d\n\n", i);
                     }
-                    sendto(sockfd, &msg, sizeof(struct packet)+1, 0, (struct sockaddr*)&clientaddr, sizeof(clientaddr));
+                    sendto(sockfd, &msg, sizeof(struct packet) + 1, 0, (struct sockaddr*)&clientaddr, sizeof(clientaddr));
                 }
 
 

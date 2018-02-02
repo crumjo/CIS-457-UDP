@@ -67,8 +67,18 @@ int main(int argc, char **argv)
     int fsize = packet_info[1];
     int num_packets = packet_info[2];
     int window = packet_info[3];
-	printf("%d packet #, %d bytes, %d total packets, %d window size\n", packet_info[0], fsize, num_packets, window);
+    int rem = 0;
+    printf("%d packet #, %d bytes, %d total packets, %d window size\n", packet_info[0], fsize, num_packets, window);
 
+    /* Calculate remainder. */
+    if (fsize % 1024 != 0)
+    {
+        num_packets--;
+        rem = fsize - (num_packets * 1024);
+        num_packets++;
+        printf("Remainder: %d\n", rem);
+    }
+    
     /* User input for new file. */
 //    printf("Enter a new file name with proper extension: ");
 //    char nfname[32];
@@ -84,17 +94,19 @@ int main(int argc, char **argv)
     
 	FILE* file = fopen("temp.pdf", "wb");
 
-    for (int i = 0; i < packet_info[2]; i++)
+    for (int i = 0; i < num_packets; i++)
     {
-        if (packet_info[1] - i*1024 > 1024)
+        if (fsize - i * 1024 > 1024)
         {
             recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
+            fwrite(msg.buffer, sizeof(char), 1024, file);
         }
         else
         {
+            printf("Last packet.\n");
             recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
+            fwrite(msg.buffer, sizeof(char), rem, file);
         }
-        fwrite(msg.buffer, sizeof(char), 1024, file);
     }
     fclose(file);
 	close(sockfd);
