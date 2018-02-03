@@ -73,8 +73,12 @@ int main(int argc, char **argv)
                 
                 int packet_num = 0;
                 int rem = 0;
-                int window_size = 5;
+                const int window_size = 5;
                 int num_packets = (fsize / 1024);
+                int upper = window_size;
+                int lower = 0;
+                int recv_num = 0;
+                int buff_l = window_size;
                 
                 /* Calculate remainder. */
                 if (fsize % 1024 != 0)
@@ -84,40 +88,92 @@ int main(int argc, char **argv)
                     printf("Remainder: %d\n", rem);
                 }
                 
+                int packets_left = num_packets;
+                printf("Num Packets: %d \t Packets left: %d\n", num_packets, packets_left);
+                
 				int packet_info [4] = {-1, fsize, num_packets, window_size};
 				struct packet msg;
 
 				printf("%s contains %d bytes for %d packets\n", fname, fsize, num_packets);
 				sendto(sockfd, packet_info, sizeof(int) * 4 + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
 
-
-
-                for (int i = 0; i < packet_info[2]; i++)
+                /* Buffer to hold packets. */
+                struct packet *send_buf = (struct packet *) malloc (window_size * sizeof(struct packet));
+                
+                while(packets_left > 0)
                 {
-                    
-                    if (fsize - i * 1024 > 1024)
+                    printf("Packets left: %d\n", packets_left);
+                    if (packets_left > window_size)
                     {
-                        fread(msg.buffer, sizeof(char), 1024, file);
-//                        printf("%s", msg.buffer);
-//                        printf("\n\n%d\n\n", i);
+                        for (int i = 0; i < window_size; i++)
+                        {
+                            msg.p_num = i;
+                            fread(msg.buffer, sizeof(char), 1024, file);
+                            send_buf[i] = msg;
+                        }
                     }
+
+                    /* Last array of packets to send. */
                     else
                     {
-                        printf("Last packet.\n");
-                        fread(msg.buffer, sizeof(char), rem, file);
-//                        printf("%s", msg.buffer);
-//                        printf("\n\n%d\n\n", i);
+                        printf("Last buffer to send.\n");
+                        buff_l = packets_left;
+                        printf("Buffer length: %d\n", buff_l);
+                        
+                        /* Add what is left. */
+                        for (int i = 0; i < buff_l; i++)
+                        {
+                            if (fsize - i * 1024 > 1024)
+                            {
+                                msg.p_num = i;
+                                fread(msg.buffer, sizeof(char), 1024, file);
+                                send_buf[i] = msg;
+                            }
+                            else
+                            {
+                                printf("Last packet.\n");
+                                msg.p_num = i;
+                                fread(msg.buffer, sizeof(char), rem, file);
+                                send_buf[i] = msg;
+                            }
+                        }
                     }
-                    sendto(sockfd, &msg, sizeof(struct packet) + 1, 0, (struct sockaddr*)&clientaddr, sizeof(clientaddr));
+                    
+                    for (int bl = 0; bl < buff_l; bl++) {
+                        printf("bl: %d\n", bl);
+                        sendto(sockfd, &send_buf[bl], sizeof(struct packet) + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
+                        packets_left --;
+//                        printf("Packets left: %d\n", packets_left);
+                    }
+                    
+                    /* Wait for acknowledgement. */
+                    
+                    //Receiver sends a 5 if it is ready for the next window of packets.
                 }
+                
+                
+                
+                    
+//                    if (fsize - i * 1024 > 1024)
+//                    {
+//                        fread(msg.buffer, sizeof(char), 1024, file);
+////                        printf("%s", msg.buffer);
+////                        printf("\n\n%d\n\n", i);
+//                    }
+//                    else
+//                    {
+//                        printf("Last packet.\n");
+//                        fread(msg.buffer, sizeof(char), rem, file);
+////                        printf("%s", msg.buffer);
+////                        printf("\n\n%d\n\n", i);
+//                    }
+//                    sendto(sockfd, &msg, sizeof(struct packet) + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
 
 
-
-
-
-				//END FREE
-
+                
+                
                 fclose(file);
+                free(send_buf);
 			}
 			else
             {

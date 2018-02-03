@@ -94,12 +94,14 @@ int main(int argc, char **argv)
         {
             recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
             fwrite(msg.buffer, sizeof(char), 1024, file);
+            printf("Packet seq num: %d\n", msg.p_num);
         }
         else
         {
             printf("Last packet.\n");
             recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
             fwrite(msg.buffer, sizeof(char), rem, file);
+            printf("Packet seq num: %d\n", msg.p_num);
         }
     }
     fclose(file);
