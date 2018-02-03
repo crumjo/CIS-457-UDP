@@ -24,7 +24,13 @@ struct packet {
 
 int main(int argc, char **argv)
 {
-	int port_num;
+    if (argc != 2)
+    {
+        printf("Please run the program with the new file name as arguments.\n");
+        exit(0);
+    }
+
+    int port_num;
 	char temp[5];
 	char client_ip[16];
 
@@ -79,23 +85,11 @@ int main(int argc, char **argv)
         printf("Remainder: %d\n", rem);
     }
     
-    /* User input for new file. */
-//    printf("Enter a new file name with proper extension: ");
-//    char nfname[32];
-//    fgets(nfname, 32, stdin);
-//
-//    int nf_len = (int)strlen(nfname);
-//    if (nfname[nf_len - 1] == '\n') {
-//        nfname[nf_len - 1] = '\0';
-//    }
-//
-//    printf("You entered :%s:\n", nfname);
-//    ^^^ Why does this commented code break the program?
+	FILE* file = fopen(argv[1], "wb");
     
-	FILE* file = fopen("temp.pdf", "wb");
-
     for (int i = 0; i < num_packets; i++)
     {
+
         if (fsize - i * 1024 > 1024)
         {
             recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
