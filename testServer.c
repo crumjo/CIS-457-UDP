@@ -107,6 +107,7 @@ int main(int argc, char **argv)
                     {
                         for (int i = 0; i < window_size; i++)
                         {
+                            //This works for now but needs to be recalculated in case of packet drop.
                             msg.p_num = i;
                             fread(msg.buffer, sizeof(char), 1024, file);
                             send_buf[i] = msg;
@@ -142,35 +143,14 @@ int main(int argc, char **argv)
                     for (int bl = 0; bl < buff_l; bl++) {
                         printf("bl: %d\n", bl);
                         sendto(sockfd, &send_buf[bl], sizeof(struct packet) + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
-                        packets_left --;
-//                        printf("Packets left: %d\n", packets_left);
+                        packets_left --; //This will have to change later based on acks from client.
                     }
                     
                     /* Wait for acknowledgement. */
                     
-                    //Receiver sends a 5 if it is ready for the next window of packets.
+                    //Receiver sends ack of highest sequence number.
+                    //Recalculate buffer above so resend if packets are dropped.
                 }
-                
-                
-                
-                    
-//                    if (fsize - i * 1024 > 1024)
-//                    {
-//                        fread(msg.buffer, sizeof(char), 1024, file);
-////                        printf("%s", msg.buffer);
-////                        printf("\n\n%d\n\n", i);
-//                    }
-//                    else
-//                    {
-//                        printf("Last packet.\n");
-//                        fread(msg.buffer, sizeof(char), rem, file);
-////                        printf("%s", msg.buffer);
-////                        printf("\n\n%d\n\n", i);
-//                    }
-//                    sendto(sockfd, &msg, sizeof(struct packet) + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
-
-
-                
                 
                 fclose(file);
                 free(send_buf);
