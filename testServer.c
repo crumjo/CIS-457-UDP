@@ -85,11 +85,9 @@ int main(int argc, char **argv)
                 {
                     rem = fsize - (num_packets * 1024);
                     num_packets++;
-                    printf("Remainder: %d\n", rem);
                 }
                 
                 int packets_left = num_packets;
-                printf("Num Packets: %d \t Packets left: %d\n", num_packets, packets_left);
                 
 				int packet_info [4] = {-1, fsize, num_packets, window_size};
 				struct packet msg;
@@ -117,9 +115,7 @@ int main(int argc, char **argv)
                     /* Last array of packets to send. */
                     else
                     {
-                        printf("Last buffer to send.\n");
                         buff_l = packets_left;
-                        printf("Buffer length: %d\n", buff_l);
                         
                         /* Add what is left. */
                         for (int i = 0; i < buff_l; i++)
@@ -141,7 +137,7 @@ int main(int argc, char **argv)
                     }
                     
                     for (int bl = 0; bl < buff_l; bl++) {
-                        printf("bl: %d\n", bl);
+                        printf("Sending packet with sequence number: %d\n", bl);
                         sendto(sockfd, &send_buf[bl], sizeof(struct packet) + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
                         packets_left --; //This will have to change later based on acks from client.
                     }

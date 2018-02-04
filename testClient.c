@@ -82,7 +82,6 @@ int main(int argc, char **argv)
         num_packets--;
         rem = fsize - (num_packets * 1024);
         num_packets++;
-        printf("Remainder: %d\n", rem);
     }
     
 	FILE* file = fopen(argv[1], "wb");
