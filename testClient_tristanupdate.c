@@ -131,7 +131,7 @@ int main(int argc, char **argv)
                 tmp_buff[i] = msg;
                 pack_rec++;
 				pack_nums[msg.p_num] = msg.p_num;
-                printf("Packet sequence number received: %d\n", msg.p_num);
+                printf("Packet sequence number received: %d\n", pack_rec);
             }
             
             /* Checks if packets are out of order. */
@@ -146,6 +146,7 @@ int main(int argc, char **argv)
             }
             
             char ack = '5';
+            printf("packs received: %d\n", pack_rec);
 			if (pack_rec < window)
 			{
 				for (int i = 1; i < window; i++)

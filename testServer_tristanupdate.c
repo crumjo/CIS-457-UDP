@@ -157,7 +157,7 @@ int main(int argc, char **argv)
                     /* Wait for acknowledgement. */
                     recvfrom(sockfd, &tmp_num, sizeof(char)*1, 0, (struct sockaddr*) &clientaddr, &clen);
                     int packet_num = abs(tmp_num-48);
-                    printf("packet_num: %d\n", packet_num);
+                    printf("packet_num: %d %d\n", packet_num, buff_l);
                     if (packet_num < buff_l)
                     {
                         packets_left-=packet_num;
