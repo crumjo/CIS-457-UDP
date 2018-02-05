@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 
     while(port_num < 1023 || port_num > 49152) {
         if (port_num < 1023 || port_num > 49152) {
-            printf("Please enter a valid port between 1023 and 49152: ");
+            printf("Please enter a valid port between 1023 and 49152");
             fgets(temp, 5, stdin);
             port_num = atoi(temp);
         }
@@ -129,9 +129,7 @@ int main(int argc, char **argv)
                 recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
                 packets_left--;
                 tmp_buff[i] = msg;
-                pack_rec++;
-				pack_nums[msg.p_num] = msg.p_num;
-                printf("Packet sequence number received: %d\n", pack_rec);
+                printf("Packet sequence number received: %d\n", i);
             }
             
             /* Checks if packets are out of order. */
@@ -144,16 +142,28 @@ int main(int argc, char **argv)
             {
                 fwrite(&tmp_buff[i].buffer, sizeof(char), 1024, file);
             }
-            
+
+            for (int i = 0; i < window; i++)
+            {
+                if (tmp_buff[i].p_num == i)
+                {
+                    pack_rec ++;
+                }
+                
+                pack_nums[i] = tmp_buff[i].p_num;
+            }
+            packets_left+= (window-pack_rec);
+
             char ack = '5';
             printf("packs received: %d\n", pack_rec);
+            printf("Packets left: %d\n", packets_left);
 			if (pack_rec < window)
 			{
 				for (int i = 1; i < window; i++)
 				{
 					if (pack_nums[i-1]+1 != pack_nums[i])
 					{
-						printf("Lost a packet");
+						printf("Lost a packet\n");
 						ack = 48+pack_nums[i-1];
 						break;
 					}

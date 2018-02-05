@@ -35,7 +35,7 @@ int main(int argc, char **argv)
 
 	while(port_num < 1023 || port_num > 49152) {
         	if (port_num < 1023 || port_num > 49152) {
-        	    printf("Please enter a valid port between 1023 and 49152: ");
+        	    printf("Please enter a valid port between 1023 and 49152");
         	    fgets(temp, 5, stdin);
         	    port_num = atoi(temp);
         	}
@@ -161,6 +161,7 @@ int main(int argc, char **argv)
                     if (packet_num < buff_l)
                     {
                         packets_left-=packet_num;
+                        fseek(file, (packet_info[2]-packets_left)*1024, SEEK_SET);
                         printf("Packet dropped.\n");
                     }
                     else
