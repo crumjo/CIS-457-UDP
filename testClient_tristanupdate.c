@@ -127,7 +127,6 @@ int main(int argc, char **argv)
                 /* Break from loop if it takes too long to receive. */
                 
                 recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
-                packets_left--;
                 tmp_buff[i] = msg;
                 printf("Packet sequence number received: %d\n", i);
             }
@@ -167,8 +166,14 @@ int main(int argc, char **argv)
 						ack = 48+pack_nums[i-1];
 						break;
 					}
+                    packets_left--;
 				}
 			}
+            else
+            {
+                printf("All received.\n\n");
+                packets_left -= pack_rec;
+            }
             sendto(sockfd, &ack, 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
         }
         
@@ -183,7 +188,6 @@ int main(int argc, char **argv)
                 if (fsize - i * 1024 > 1024)
                 {
                     recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
-                    packets_left--;
                     pack_rec++;
 				    pack_nums[msg.p_num] = msg.p_num;
                     tmp_buff[i] = msg;
@@ -192,7 +196,6 @@ int main(int argc, char **argv)
                 else
                 {
                     recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
-                    packets_left--;
                     pack_rec++;
 				    pack_nums[msg.p_num] = msg.p_num;
                     tmp_buff[i] = msg;
@@ -231,7 +234,13 @@ int main(int argc, char **argv)
 						break;
 					}
 				}
+                packets_left--;
 			}
+            else
+            {
+                printf("Packets Received:::::: %d\n", pack_rec);
+                packets_left -= pack_rec;
+            }
             sendto(sockfd, &ack, 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
         }
     }
