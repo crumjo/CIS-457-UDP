@@ -153,6 +153,7 @@ int main(int argc, char **argv)
                     packets_left--;
                     pack_rec++;
 				    pack_nums[msg.p_num] = msg.p_num;
+                    tmp_buff[i] = msg;
                     //printf("Packet sequence number received: %d\n", msg.p_num);
                 }
                 else
@@ -161,7 +162,7 @@ int main(int argc, char **argv)
                     packets_left--;
                     pack_rec++;
 				    pack_nums[msg.p_num] = msg.p_num;
-
+                    tmp_buff[i] = msg;
                     printf("Last packet sequence number received: %d\n", msg.p_num);
                 }
             }
