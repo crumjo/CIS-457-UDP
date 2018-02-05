@@ -69,7 +69,14 @@ int main(int argc, char **argv)
 
 	/* Send file name request to server. */
 	sendto(sockfd, fname, strlen(fname) + 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
-	int packet_info[4];
+	int file_check;
+    recvfrom(sockfd, &file_check, sizeof(int), 0, (struct sockaddr*) &serveraddr, &len);
+    if (file_check == 0)
+    {
+        printf("File does not exist\n");
+        exit(1);
+    }
+    int packet_info[4];
 	struct packet msg;
 
 	recvfrom(sockfd, packet_info, sizeof(int) * 4 + 1, 0, (struct sockaddr*) &serveraddr, &len);
@@ -78,7 +85,22 @@ int main(int argc, char **argv)
     int window = packet_info[3];
     int rem = 0;
     printf("%d packet #, %d bytes, %d total packets, %d window size\n", packet_info[0], fsize, num_packets, window);
-
+    if (window == 5)
+    {
+        sendto(sockfd, &window, sizeof(int) + 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
+    }
+    while (window != 5)
+    {
+        recvfrom(sockfd, packet_info, sizeof(int) * 4 + 1, 0, (struct sockaddr*) &serveraddr, &len);
+        fsize = packet_info[1];
+        num_packets = packet_info[2];
+        window = packet_info[3];
+        rem = 0;
+        if (window == 5)
+        {
+            sendto(sockfd, &window, sizeof(int) + 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
+        }
+    }
     /* Calculate remainder. */
     if (fsize % 1024 != 0)
     {
@@ -154,7 +176,7 @@ int main(int argc, char **argv)
                     pack_rec++;
 				    pack_nums[msg.p_num] = msg.p_num;
                     tmp_buff[i] = msg;
-                    //printf("Packet sequence number received: %d\n", msg.p_num);
+                    printf("Packet sequence number received: %d\n", msg.p_num);
                 }
                 else
                 {

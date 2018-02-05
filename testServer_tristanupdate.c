@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <fcntl.h>
+#include <math.h>
 
 #pragma pack(1)
 struct packet {
@@ -67,10 +68,11 @@ int main(int argc, char **argv)
 		else
 		{
 			printf("File request from client: %s\n", fname);
-
+            int file_check;
 			if (access(fname, F_OK) != -1)
 			{
-
+                file_check = 1;
+                sendto(sockfd, &file_check, sizeof(int) + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
 				FILE *file = fopen(fname, "rb");
 				struct stat st;
 				int fsize = 0;
@@ -97,9 +99,14 @@ int main(int argc, char **argv)
                 
 				int packet_info [4] = {-1, fsize, num_packets, window_size};
 				struct packet msg;
-
+                int x = 0;
 				printf("%s contains %d bytes for %d packets\n", fname, fsize, num_packets);
-				sendto(sockfd, packet_info, sizeof(int) * 4 + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
+				while (x != window_size)
+                {
+                    sendto(sockfd, packet_info, sizeof(int) * 4 + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
+                    recvfrom(sockfd, &x, sizeof(int), 0, (struct sockaddr*) &clientaddr, &clen);
+
+                }
 
                 /* Buffer to hold packets. */
                 struct packet *send_buf = (struct packet *) malloc (window_size * sizeof(struct packet));
@@ -149,7 +156,7 @@ int main(int argc, char **argv)
                     
                     /* Wait for acknowledgement. */
                     recvfrom(sockfd, &tmp_num, sizeof(char)*1, 0, (struct sockaddr*) &clientaddr, &clen);
-                    int packet_num = tmp_num-48;
+                    int packet_num = abs(tmp_num-48);
                     printf("packet_num: %d\n", packet_num);
                     if (packet_num < buff_l)
                     {
@@ -171,7 +178,9 @@ int main(int argc, char **argv)
 			else
             {
 				printf("The file '%s' could not be found.\n", fname);
-			}
+                file_check = 0;
+                sendto(sockfd, &file_check, sizeof(int) + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
+            }
 
 		}
 	}
