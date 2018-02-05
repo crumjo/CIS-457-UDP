@@ -13,13 +13,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <sys/uio.h>
+#include "reorder.h"
 
-#pragma pack(1)
-struct packet {
-	int p_num;
-	char buffer[1024];
-};
-#pragma pack(0)
 
 
 int main(int argc, char **argv)
@@ -111,10 +106,17 @@ int main(int argc, char **argv)
                 printf("Packet sequence number received: %d\n", msg.p_num);
             }
             
+            /* Checks if packets are out of order. */
+            if (!check_order(window, tmp_buff))
+            {
+                order(window, tmp_buff);
+            }
+
             for (int i = 0; i < window; i++)
             {
                 fwrite(&tmp_buff[i].buffer, sizeof(char), 1024, file);
             }
+            
             char ack[] = "5";
             sendto(sockfd, ack, 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
         }
@@ -142,6 +144,12 @@ int main(int argc, char **argv)
                 }
             }
             
+            /* Checks if packets are out of order. */
+            if (!check_order(buff_l, tmp_buff))
+            {
+                order(buff_l, tmp_buff);
+            }
+            
             for (int i = 0; i < buff_l; i++)
             {
                 /* Have to change size for last packet. */
@@ -162,24 +170,6 @@ int main(int argc, char **argv)
         }
     }
     
-    
-//    for (int i = 0; i < num_packets; i++)
-//    {
-//
-//        if (fsize - i * 1024 > 1024)
-//        {
-//            recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
-//            fwrite(msg.buffer, sizeof(char), 1024, file);
-//            printf("Packet seq num: %d\n", msg.p_num);
-//        }
-//        else
-//        {
-//            printf("Last packet.\n");
-//            recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
-//            fwrite(msg.buffer, sizeof(char), rem, file);
-//            printf("Packet seq num: %d\n", msg.p_num);
-//        }
-//    }
     fclose(file);
     free(tmp_buff);
 	close(sockfd);
