@@ -107,6 +107,8 @@ int main(int argc, char **argv)
             {
                 fwrite(&tmp_buff[i].buffer, sizeof(char), 1024, file);
             }
+            char ack[] = "5";
+            sendto(sockfd, ack, 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
         }
         
         /* Last set of packets to reveive. */
@@ -131,6 +133,7 @@ int main(int argc, char **argv)
                     printf("Last packet sequence number received: %d\n", msg.p_num);
                 }
             }
+            
             for (int i = 0; i < buff_l; i++)
             {
                 /* Have to change size for last packet. */
@@ -144,6 +147,10 @@ int main(int argc, char **argv)
                     fwrite(&tmp_buff[i].buffer, sizeof(char), rem, file);
                 }
             }
+            char ack[] = "5";
+            sprintf(ack, "%d", buff_l);
+            printf("Buf_l: %s\n", ack);
+            sendto(sockfd, ack, 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
         }
     }
     

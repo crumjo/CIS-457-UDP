@@ -71,12 +71,10 @@ int main(int argc, char **argv)
 					fsize = st.st_size;
 				}
                 
-                //char packet_num[1];
+                char tmp_num[1];
                 int rem = 0;
                 const int window_size = 5;
                 int num_packets = (fsize / 1024);
-                //int upper = window_size;
-                //int lower = 0;
                 int buff_l = window_size;
                 
                 /* Calculate remainder. */
@@ -138,16 +136,21 @@ int main(int argc, char **argv)
                     for (int bl = 0; bl < buff_l; bl++) {
                         printf("Sending packet with sequence number: %d\n", bl);
                         sendto(sockfd, &send_buf[bl], sizeof(struct packet) + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
-                        packets_left --; //This will have to change later based on acks from client.
                     }
                     
                     /* Wait for acknowledgement. */
-                    //recvfrom(sockfd, packet_num, 32, 0, (struct sockaddr*) &clientaddr, &clen);
-                    
-//                    if (packet_num < 5)
-//                    {
-//                        printf("Packet dropped.\n");
-//                    }
+                    recvfrom(sockfd, tmp_num, 32, 0, (struct sockaddr*) &clientaddr, &clen);
+                    int packet_num = atoi(tmp_num);
+                    printf("packet_num: %d\n", packet_num);
+                    if (packet_num < buff_l)
+                    {
+                        printf("Packet dropped.\n");
+                    }
+                    else
+                    {
+                        printf("All packets made it.\n\n");
+                        packets_left -= buff_l;
+                    }
                     
                     //Receiver sends ack of highest sequence number.
                     //Recalculate buffer above so resend if packets are dropped.
