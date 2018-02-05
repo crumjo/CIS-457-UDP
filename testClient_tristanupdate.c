@@ -134,6 +134,7 @@ int main(int argc, char **argv)
             /* Checks if packets are out of order. */
             if (!check_order(window, tmp_buff))
             {
+                printf("Out of order.");
                 order(window, tmp_buff);
             }
 
@@ -166,15 +167,12 @@ int main(int argc, char **argv)
 						ack = 48+pack_nums[i-1];
 						break;
                     }
-                    else
-                    {
-                        packets_left--;
-                    }
 				}
+                packets_left -= pack_rec;
 			}
             else
             {
-                printf("All received.\n\n");
+                printf("All received.\n\n\n");
                 packets_left -= pack_rec;
             }
             sendto(sockfd, &ack, 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
@@ -235,11 +233,10 @@ int main(int argc, char **argv)
 						printf("Lost a packet");
 						ack = 48+pack_nums[i-1];
 						break;
-                    } else {
-                        packets_left--;
                     }
+                    
                 }
-                
+                packets_left -= pack_rec;
             } else {
                     printf("Packets Received:::::: %d\n", pack_rec);
                     packets_left -= pack_rec;
