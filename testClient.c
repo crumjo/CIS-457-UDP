@@ -40,6 +40,14 @@ int main(int argc, char **argv)
 	fgets(temp, 5, stdin);
 	port_num = atoi(temp);
 
+    while(port_num < 1023 || port_num > 49152) {
+        if (port_num < 1023 || port_num > 49152) {
+            printf("Please enter a valid port between 1023 and 49152");
+            fgets(temp, 5, stdin);
+            port_num = atoi(temp);
+        }
+    }
+
 	printf("Enter a file name: ");
 	char fname[32];
 
