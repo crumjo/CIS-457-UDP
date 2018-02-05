@@ -152,7 +152,6 @@ int main(int argc, char **argv)
                         packets_left -= buff_l;
                     }
                     
-                    //Receiver sends ack of highest sequence number.
                     //Recalculate buffer above so resend if packets are dropped.
                 }
                 
