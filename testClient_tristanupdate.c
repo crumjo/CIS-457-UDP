@@ -151,11 +151,11 @@ int main(int argc, char **argv)
                 
                 pack_nums[i] = tmp_buff[i].p_num;
             }
-            packets_left+= (window-pack_rec);
+            //packets_left -= pack_rec;;
 
             char ack = '5';
             printf("packs received: %d\n", pack_rec);
-            printf("Packets left: %d\n", packets_left);
+            printf("Packets left: %d\n\n", packets_left);
 			if (pack_rec < window)
 			{
 				for (int i = 1; i < window; i++)
@@ -165,8 +165,11 @@ int main(int argc, char **argv)
 						printf("Lost a packet\n");
 						ack = 48+pack_nums[i-1];
 						break;
-					}
-                    packets_left--;
+                    }
+                    else
+                    {
+                        packets_left--;
+                    }
 				}
 			}
             else
@@ -232,18 +235,19 @@ int main(int argc, char **argv)
 						printf("Lost a packet");
 						ack = 48+pack_nums[i-1];
 						break;
-					}
-				}
-                packets_left--;
-			}
-            else
-            {
-                printf("Packets Received:::::: %d\n", pack_rec);
-                packets_left -= pack_rec;
+                    } else {
+                        packets_left--;
+                    }
+                }
+                
+            } else {
+                    printf("Packets Received:::::: %d\n", pack_rec);
+                    packets_left -= pack_rec;
             }
             sendto(sockfd, &ack, 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
         }
     }
+
     
     fclose(file);
     free(tmp_buff);
