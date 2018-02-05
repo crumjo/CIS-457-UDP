@@ -82,29 +82,91 @@ int main(int argc, char **argv)
         num_packets--;
         rem = fsize - (num_packets * 1024);
         num_packets++;
-        printf("Remainder: %d\n", rem);
     }
     
 	FILE* file = fopen(argv[1], "wb");
     
-    for (int i = 0; i < num_packets; i++)
+    int packets_left = num_packets;
+    struct packet *tmp_buff = (struct packet *) malloc (window * sizeof(struct packet));
+    
+    while (packets_left > 0)
     {
-
-        if (fsize - i * 1024 > 1024)
+        if (packets_left > window)
         {
-            recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
-            fwrite(msg.buffer, sizeof(char), 1024, file);
-            printf("Packet seq num: %d\n", msg.p_num);
+            for (int i = 0; i < window; i++)
+            {
+                /* Break from loop if it takes too long to receive. */
+                
+                recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
+                packets_left--;
+                tmp_buff[i] = msg;
+                printf("Packet sequence number received: %d\n", msg.p_num);
+            }
+            
+            for (int i = 0; i < window; i++)
+            {
+                fwrite(&tmp_buff[i].buffer, sizeof(char), 1024, file);
+            }
         }
+        
+        /* Last set of packets to reveive. */
         else
         {
-            printf("Last packet.\n");
-            recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
-            fwrite(msg.buffer, sizeof(char), rem, file);
-            printf("Packet seq num: %d\n", msg.p_num);
+            printf("Last array to receive.\n");
+            int buff_l = packets_left;
+            for (int i = 0; i < buff_l; i++)
+            {
+                if (fsize - i * 1024 > 1024)
+                {
+                    recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
+                    packets_left--;
+                    tmp_buff[i] = msg;
+                    printf("Packet sequence number received: %d\n", msg.p_num);
+                }
+                else
+                {
+                    recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
+                    packets_left--;
+                    tmp_buff[i] = msg;
+                    printf("Last packet sequence number received: %d\n", msg.p_num);
+                }
+            }
+            for (int i = 0; i < buff_l; i++)
+            {
+                /* Have to change size for last packet. */
+                if (i != (buff_l - 1))
+                {
+                    fwrite(&tmp_buff[i].buffer, sizeof(char), 1024, file);
+                }
+                else
+                {
+                    printf("Writing last packet of size: %d\n", rem);
+                    fwrite(&tmp_buff[i].buffer, sizeof(char), rem, file);
+                }
+            }
         }
     }
+    
+    
+//    for (int i = 0; i < num_packets; i++)
+//    {
+//
+//        if (fsize - i * 1024 > 1024)
+//        {
+//            recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
+//            fwrite(msg.buffer, sizeof(char), 1024, file);
+//            printf("Packet seq num: %d\n", msg.p_num);
+//        }
+//        else
+//        {
+//            printf("Last packet.\n");
+//            recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
+//            fwrite(msg.buffer, sizeof(char), rem, file);
+//            printf("Packet seq num: %d\n", msg.p_num);
+//        }
+//    }
     fclose(file);
+    free(tmp_buff);
 	close(sockfd);
 	return 0;
 }
