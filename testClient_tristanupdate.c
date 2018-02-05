@@ -232,6 +232,7 @@ int main(int argc, char **argv)
 					{
 						printf("Lost a packet");
 						ack = 48+pack_nums[i-1];
+                        printf("Ack: %d\n", ack);
 						break;
                     }
                     

@@ -156,6 +156,7 @@ int main(int argc, char **argv)
                     
                     /* Wait for acknowledgement. */
                     recvfrom(sockfd, &tmp_num, sizeof(char)*1, 0, (struct sockaddr*) &clientaddr, &clen);
+                    printf("Ack: %c\n", tmp_num);
                     int packet_num = abs(tmp_num-48);
                     printf("packet_num: %d %d\n", packet_num, buff_l);
                     if (packet_num < buff_l)
