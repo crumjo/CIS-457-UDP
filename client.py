@@ -1,8 +1,9 @@
 import socket
 import sys
 import os.path
-
-
+import threading
+import pickle
+import json
 def client():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -18,31 +19,51 @@ def client():
     print("Connected to server")
 
     while True:
-        file = input("Enter command: ")
+        file = input("Enter filename: ")
         s.send(file.encode())
-        if file == 'exit':
-            s.close()
-            break
-        elif file == 'ls':
-            print("File directory printing...")
-            print(s.recv(1024).decode())
+
+        fileExist = s.recv(1024).decode()
+        if fileExist == "y":
+            file = open("COPY_" + file, "wb")
+            size = int(s.recv(1024).decode())
+            s.send("ready".encode())
+            print("Receiving file...")
+
+            packet_buffer = {}
+            for i in range(0,5):
+                packet_buffer[i] = {i:""}
+
+            next_packet_received = 0
+            count = 0
+            while count*1024 < size:
+                # size of dict entry + 1024 bytes
+                # Currently have issue with unpickling - order of bytearray is screwy
+                try:
+                    dataP = pickle.loads(s.recv(1073))
+                except:
+                    print ("error unpickling")
+
+                # print(dataP)
+                for i in dataP:
+                    packet_buffer[i] = dataP[i]
+                # if there is order in the buffer (1,2,3) print parts to buffer
+                # if there is not order in buffer (1,3) print ordered part to buffer(1)
+                for i in packet_buffer:
+                    if i == next_packet_received:
+                        count += 1
+                        next_packet_received += 1
+                        file.write(packet_buffer[i])
+                        # if window at end, reset to start of array
+                        if next_packet_received == 5:
+                            next_packet_received = 0
+                # Send ack of the lowest packet in array to shift
+                s.send(str(next_packet_received).encode())
+
+            file.close()
+            print("Done receiving")
         else:
-            fileExist = s.recv(1024).decode()
-            if fileExist == "y":
-                file = open("COPY_" + file, "wb")
-                size = int(s.recv(1024).decode())
-                s.send("ready".encode())
-                print("Receiving file...")
-                count = 0
-                while count*1024 < size:
-                    line = s.recv(1024)
-                    file.write(line)
-                    count += 1
-                    print(file.tell())
-                file.close()
-                print("Done receiving")
-            else:
-                print("File does not exist! Check file name.");
+            print("File does not exist! Check file name.");
 
 
-client()
+if __name__ == '__main__':
+    client()
