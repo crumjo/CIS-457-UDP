@@ -1,7 +1,9 @@
 /**
  * Takes an array of packets and ensures that they are in order.
+ * Puts array of packets in order.
  *
  * @author Joshua Crum
+ * @version 2/5/2018
  */
 
 #pragma pack(1)

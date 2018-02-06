@@ -1,8 +1,8 @@
-/*
- * UDP Server that echos client input.
+/**
+ * UDP Server that sends files to a client.
  *
- * @author Joshua Crum
- * @author Tristan VanFossen
+ * @author Joshua Crum, Tristan VanFossen, Alex Fountain
+ * @version 2/5/2018
  */
 
 #include <netinet/in.h>
@@ -13,18 +13,16 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <fcntl.h>
-
-
+#include <math.h>
 
 #pragma pack(1)
 struct packet {
 	int p_num;
-	char *buffer;
+	char buffer[1024];
 };
 #pragma pack(0)
-
-
 
 int main(int argc, char **argv)
 {
@@ -34,6 +32,14 @@ int main(int argc, char **argv)
 	printf("Enter a port number: ");
 	fgets(temp, 5, stdin);
 	port_num = atoi(temp);
+
+	while(port_num < 1023 || port_num > 49152) {
+        	if (port_num < 1023 || port_num > 49152) {
+        	    printf("Please enter a valid port between 1023 and 49152");
+        	    fgets(temp, 5, stdin);
+        	    port_num = atoi(temp);
+        	}
+    	}
 
 	int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 	struct timeval timeout;
@@ -48,129 +54,134 @@ int main(int argc, char **argv)
 	serveraddr.sin_addr.s_addr = INADDR_ANY;
 	bind(sockfd, (struct sockaddr*)&serveraddr, sizeof(serveraddr));
 
-	while (1) {
+	while (1)
+	{
 		socklen_t clen = sizeof(clientaddr);
 		char fname[32];
 		long n = recvfrom(sockfd, fname, 32, 0, (struct sockaddr*) &clientaddr, &clen);
 
 		/* Checks for any recv error, not just timeout. */
-		if (n == -1) {
+		if (n == -1)
+		{
 			printf("Timed out while waiting to receive.\n");
 		}
-		else {
+		else
+		{
 			printf("File request from client: %s\n", fname);
-
-			if (access(fname, F_OK) != -1) {
-
-				FILE *in_file = fopen(fname, "rb");
+            int file_check;
+			if (access(fname, F_OK) != -1)
+			{
+                file_check = 1;
+                sendto(sockfd, &file_check, sizeof(int) + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
+				FILE *file = fopen(fname, "rb");
 				struct stat st;
-				int len;
+				int fsize = 0;
 
-				if(stat(fname, &st) == 0) {
-                    
-                    const int data_size = 1024;
-//                    int packet_num = 0;
-                    int num_packets = 0;
-                    int rem = 0;
-                    int window_size = 5;
-                    struct packet tmp_packet;
-                    
-                    printf("File found: %s\n", fname);
-                    len = st.st_size;
-                    
-                    /* Calculate file size. */
-                    fseek(in_file, 0, SEEK_END);
-                    long fsize = ftell(in_file);
-                    rewind(in_file);
-                    
-                    /* Get file length. */
-                    if(stat(fname, &st) == 0) {
-                        len = st.st_size;
-                    }
-                    
-                    /* Create initial packet. Considers packet with less than 1024 size at end. */
-                    if (fsize % data_size != 0) {
-                        num_packets = fsize / data_size;
-                        rem = fsize - (num_packets * data_size);
-                        num_packets++;
-                    }
-                    else {
-                        num_packets = fsize / data_size;
-                    }
-                    
-                    int packet_info [4] = {-1, fsize, num_packets, window_size};
-                    
-                    /* Read file into buffer. */
-                    char *buffer = (char *) malloc (fsize + 1);
-                    fread(buffer, fsize, 1, in_file);
-                    fclose(in_file);
-                    
-                    /* Buffer that holds five packets. */
-//                    struct packet *tmp_buf = (struct packet *) malloc (5 * sizeof(struct packet));
-                    
-                    /* Send initial packet information. */
-                    printf("%d packet #, %d bytes, %d total packets, %d window size\n",
-                           packet_info[0], packet_info[1], packet_info[2], packet_info[3]);
-                    sendto(sockfd, packet_info, sizeof(int) * 4, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
-                    
-                    /* Split buffer into packet structs and put in packet_buf. */
-                    char *c_packet_num = (char *) malloc (sizeof(int));
-                    
-                    /* Make sure server is sending correctly. */
-                    FILE *test = fopen("test.pdf", "wb");
-                    
-                    for (int i = 0; i < num_packets; i++) {
-                        
-                        /* Check if last packet with remainder. */
-                        if (rem != 0 && i == (num_packets)) {
-                            printf("Remainder: %d\n", rem);
-                            
-                            tmp_packet.p_num = i;
-                            tmp_packet.buffer = (char *) malloc (rem * sizeof(char) + 1);
-                            
-//                            strncpy(tmp_packet.buffer, buffer + (i * data_size), rem);
-                            memcpy(tmp_packet.buffer, &buffer[i * data_size], rem * sizeof(char));
-                            
-//                            printf("Temp buf :%s:\n", tmp_packet.buffer);
-                            
-                            sendto(sockfd, tmp_packet.buffer, strlen(tmp_packet.buffer) + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
-                            
-                            fwrite(tmp_packet.buffer, strlen(tmp_packet.buffer), 1, test);
-                        }
-                        else {
-    
-                            tmp_packet.p_num = i;
-                            tmp_packet.buffer = (char *) malloc (1025 * sizeof(char));
-                            
-//                            strncpy(tmp_packet.buffer, buffer + (i * data_size), data_size);
-                            memcpy(tmp_packet.buffer, &buffer[i * data_size], data_size * sizeof(char));
-                            
-//                            printf("Temp buf :%s:\n", tmp_packet.buffer);
-                            
-                            sendto(sockfd, tmp_packet.buffer, strlen(tmp_packet.buffer) + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
-                            
-                            fwrite(tmp_packet.buffer, strlen(tmp_packet.buffer), 1, test);
-                        }
-//                        printf("Temp buf :%s:\n", tmp_packet.buffer);
-                        /* Wait for packet number confirmation. */
-                        recvfrom(sockfd, c_packet_num, sizeof(int), 0, (struct sockaddr*) &clientaddr, &clen);
-                        printf("c_packet_num :%s:\n", c_packet_num);
-                        int curr_packet_num = atoi(c_packet_num);
-                        printf("Got packet: %d\n", curr_packet_num);
-                        free(tmp_packet.buffer);
-                    }
-                    
-                    fclose(test);
-//                    free(tmp_buf);
-                    free(buffer);
-                    
-                    /* Sliding window here. */
+				if(stat(fname, &st) == 0)
+				{
+					fsize = st.st_size;
 				}
-				
+                
+                char tmp_num;
+                int rem = 0;
+                const int window_size = 5;
+                int num_packets = (fsize / 1024);
+                int buff_l = window_size;
+                
+                /* Calculate remainder. */
+                if (fsize % 1024 != 0)
+                {
+                    rem = fsize - (num_packets * 1024);
+                    num_packets++;
+                }
+                
+                int packets_left = num_packets;
+                
+				int packet_info [4] = {-1, fsize, num_packets, window_size};
+				struct packet msg;
+                int x = 0;
+				printf("%s contains %d bytes for %d packets\n\n", fname, fsize, num_packets);
+				while (x != window_size)
+                {
+                    sendto(sockfd, packet_info, sizeof(int) * 4 + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
+                    recvfrom(sockfd, &x, sizeof(int), 0, (struct sockaddr*) &clientaddr, &clen);
+
+                }
+
+                /* Buffer to hold packets. */
+                struct packet *send_buf = (struct packet *) malloc (window_size * sizeof(struct packet));
+                
+                /* Loops until all packets have been acknowledged. Will resend packets if not acknowledged. */
+                while(packets_left > 0)
+                {
+                    if (packets_left > window_size)
+                    {
+                        for (int i = 0; i < window_size; i++)
+                        {
+                            msg.p_num = i;
+                            fread(msg.buffer, sizeof(char), 1024, file);
+                            send_buf[i] = msg;
+                        }
+                    }
+
+                    /* Last array of packets to send. */
+                    else
+                    {
+                        buff_l = packets_left;
+                        
+                        /* Add what is left. */
+                        for (int i = 0; i < buff_l; i++)
+                        {
+                            if (fsize - i * 1024 > 1024)
+                            {
+                                msg.p_num = i;
+                                fread(msg.buffer, sizeof(char), 1024, file);
+                                send_buf[i] = msg;
+                            }
+                            else
+                            {
+                                printf("Last packet.\n");
+                                msg.p_num = i;
+                                fread(msg.buffer, sizeof(char), rem, file);
+                                send_buf[i] = msg;
+                            }
+                        }
+                    }
+                    
+                    for (int bl = 0; bl < buff_l; bl++) {
+                        printf("Sending packet with sequence number: %d\n", bl);
+                        sendto(sockfd, &send_buf[bl], sizeof(struct packet) + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
+                    }
+                    
+                    /* Wait for acknowledgement. */
+                    recvfrom(sockfd, &tmp_num, sizeof(char)*1, 0, (struct sockaddr*) &clientaddr, &clen);
+                    printf("Ack: %d\n", tmp_num);
+                    int packet_num = abs(tmp_num-48);
+                    printf("Packet Number: %d \t Buffer Length: %d\n", packet_num, buff_l);
+                    if (packet_num < buff_l)
+                    {
+                        packets_left-=packet_num;
+                        fseek(file, (packet_info[2]-packets_left)*1024, SEEK_SET);
+                        printf("Packet dropped.\n");
+                    }
+                    else
+                    {
+                        printf("All packets made it.\n\n\n");
+                        packets_left -= buff_l;
+                    }
+                    printf("Packets Left: %d\n", packets_left);
+                }
+                
+                fclose(file);
+                free(send_buf);
 			}
-			else {
+			else
+            {
 				printf("The file '%s' could not be found.\n", fname);
-			}
+                file_check = 0;
+                sendto(sockfd, &file_check, sizeof(int) + 1, 0, (struct sockaddr*) &clientaddr, sizeof(clientaddr));
+            }
+
 		}
 	}
 	return 0;

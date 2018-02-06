@@ -1,8 +1,8 @@
-/*
+/**
  * Client that sends data to a server and then receives it back.
  *
- * @author Joshua Crum
- * @author Tristan VanFossen
+ * @author Joshua Crum, Tristan VanFossen, Alex Fountain
+ * @version 2/5/2018
  */
 
 #include <arpa/inet.h>
@@ -13,49 +13,43 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <sys/uio.h>
+#include "reorder.h"
 
-#pragma pack(1)
-struct packet {
-	int p_num;
-	char buffer[1024];
-};
-#pragma pack(0)
 
 
 int main(int argc, char **argv)
 {
-	int port_num;
-	char tmp_port[5];
+    if (argc != 2)
+    {
+        printf("Please run the program with the new file name as arguments.\n");
+        exit(0);
+    }
+
+    int port_num;
+	char temp[5];
 	char client_ip[16];
 
 	printf("Enter an IP address: ");
 	fgets(client_ip, 16, stdin);
-    
 	printf("Enter a port number: ");
-	fgets(tmp_port, 5, stdin);
-	port_num = atoi(tmp_port);
+	fgets(temp, 5, stdin);
+	port_num = atoi(temp);
 
-    while(tmp_port < 1023 || tmp_port > 49152) {
-        if (tmp_port < 1023 || tmp_port > 49152) {
+    while(port_num < 1023 || port_num > 49152) {
+        if (port_num < 1023 || port_num > 49152) {
             printf("Please enter a valid port between 1023 and 49152");
-            fgets(tmp_port, 5, stdin);
-            port_num = atoi(tmp_port);
+            fgets(temp, 5, stdin);
+            port_num = atoi(temp);
         }
     }
 
-	int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-	struct sockaddr_in serveraddr;
-	serveraddr.sin_family = AF_INET;
-	serveraddr.sin_port = htons(port_num);
-	serveraddr.sin_addr.s_addr = inet_addr(client_ip);
-
 	printf("Enter a file name: ");
 	char fname[32];
-    
-    /* Flush stdin. */
-    char tmp[16];
-    fgets(tmp, 16, stdin);
-    fgets(fname, 32, stdin);
+
+	/* Flush stdin. */
+	char tmp[16];
+	fgets(tmp, 16, stdin);
+	fgets(fname, 32, stdin);
 
 	/* Remove trailing newline. */
 	int l = (int)strlen(fname);
@@ -63,52 +57,197 @@ int main(int argc, char **argv)
 		fname[l - 1] = '\0';
 	}
 
-//    printf("You requested the file :%s:\n", fname);
+	int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+	struct sockaddr_in serveraddr;
+	serveraddr.sin_family = AF_INET;
+	serveraddr.sin_port = htons(port_num);
+	serveraddr.sin_addr.s_addr = inet_addr(client_ip);
+
+	printf("\nYou requested the file: %s\n", fname);
 
 	socklen_t len = sizeof(serveraddr);
 
 	/* Send file name request to server. */
 	sendto(sockfd, fname, strlen(fname) + 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
-    
-    /* Receive packet information. */
+	int file_check;
+    recvfrom(sockfd, &file_check, sizeof(int), 0, (struct sockaddr*) &serveraddr, &len);
+    if (file_check == 0)
+    {
+        printf("File does not exist\n");
+        exit(1);
+    }
     int packet_info[4];
-//    int packet_num = 0;
-    recvfrom(sockfd, packet_info, sizeof(int) * 4 + 1, 0, (struct sockaddr*) &serveraddr, &len);
-    printf("%d packet #, %d bytes, %d total packets, %d window size\n",
-           packet_info[0], packet_info[1], packet_info[2], packet_info[3]);
+	struct packet msg;
+
+	recvfrom(sockfd, packet_info, sizeof(int) * 4 + 1, 0, (struct sockaddr*) &serveraddr, &len);
+    int fsize = packet_info[1];
+    int num_packets = packet_info[2];
+    int window = packet_info[3];
+    int rem = 0;
+    printf("%d packet #, %d bytes, %d total packets, %d window size\n\n", packet_info[0], fsize, num_packets, window);
+    if (window == 5)
+    {
+        sendto(sockfd, &window, sizeof(int) + 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
+    }
+    while (window != 5)
+    {
+        recvfrom(sockfd, packet_info, sizeof(int) * 4 + 1, 0, (struct sockaddr*) &serveraddr, &len);
+        fsize = packet_info[1];
+        num_packets = packet_info[2];
+        window = packet_info[3];
+        rem = 0;
+        if (window == 5)
+        {
+            sendto(sockfd, &window, sizeof(int) + 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
+        }
+    }
+    /* Calculate remainder. */
+    if (fsize % 1024 != 0)
+    {
+        num_packets--;
+        rem = fsize - (num_packets * 1024);
+        num_packets++;
+    }
     
-    /* Get size of window. */
-//    int window_size = packet_info[3];
+	FILE* file = fopen(argv[1], "wb");
     
-    printf("Enter a new file name with proper extension: ");
-    char nfname[32];
-    fgets(nfname, 32, stdin);
-    
-    int nf_len = (int)strlen(nfname);
-    if (nfname[nf_len - 1] == '\n') {
-        nfname[nf_len - 1] = '\0';
+    int packets_left = num_packets;
+    struct packet *tmp_buff = (struct packet *) malloc (window * sizeof(struct packet));
+    int pack_rec;
+	int pack_nums[5];
+
+    while (packets_left > 0)
+    {
+        pack_rec = 0;
+
+        if (packets_left > window)
+        {
+            for (int i = 0; i < window; i++)
+            {
+                /* Break from loop if it takes too long to receive. */
+                
+                recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
+                tmp_buff[i] = msg;
+                printf("Packet sequence number received: %d\n", i);
+            }
+            
+            /* Checks if packets are out of order. */
+            if (!check_order(window, tmp_buff))
+            {
+                printf("Out of order.");
+                order(window, tmp_buff);
+            }
+
+            for (int i = 0; i < window; i++)
+            {
+                fwrite(&tmp_buff[i].buffer, sizeof(char), 1024, file);
+            }
+
+            for (int i = 0; i < window; i++)
+            {
+                if (tmp_buff[i].p_num == i)
+                {
+                    pack_rec ++;
+                }
+                
+                pack_nums[i] = tmp_buff[i].p_num;
+            }
+            //packets_left -= pack_rec;;
+
+            char ack = '5';
+            printf("Packetss Received: %d\n", pack_rec);
+			if (pack_rec < window)
+			{
+				for (int i = 1; i < window; i++)
+				{
+					if (pack_nums[i-1]+1 != pack_nums[i])
+					{
+						printf("Lost a packet\n");
+						ack = 48+pack_nums[i-1];
+						break;
+                    }
+				}
+                packets_left -= pack_rec;
+			}
+            else
+            {
+                printf("All received.\n\n\n");
+                packets_left -= pack_rec;
+            }
+            sendto(sockfd, &ack, 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
+        }
+        
+        /* Last set of packets to reveive. */
+        else
+        {
+            pack_rec = 0;
+            printf("Last array to receive.\n");
+            int buff_l = packets_left;
+            for (int i = 0; i < buff_l; i++)
+            {
+                if (fsize - i * 1024 > 1024)
+                {
+                    recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
+                    pack_rec++;
+				    pack_nums[msg.p_num] = msg.p_num;
+                    tmp_buff[i] = msg;
+                    printf("Packet sequence number received: %d\n", msg.p_num);
+                }
+                else
+                {
+                    recvfrom(sockfd, &msg, sizeof(struct packet), 0, (struct sockaddr*) &serveraddr, &len);
+                    pack_rec++;
+				    pack_nums[msg.p_num] = msg.p_num;
+                    tmp_buff[i] = msg;
+                    printf("Last packet sequence number received: %d\n", msg.p_num);
+                }
+            }
+            
+            /* Checks if packets are out of order. */
+            if (!check_order(buff_l, tmp_buff))
+            {
+                order(buff_l, tmp_buff);
+            }
+            
+            for (int i = 0; i < buff_l; i++)
+            {
+                /* Have to change size for last packet. */
+                if (i != (buff_l - 1))
+                {
+                    fwrite(&tmp_buff[i].buffer, sizeof(char), 1024, file);
+                }
+                else
+                {
+                    printf("Writing last packet of size: %d\n", rem);
+                    fwrite(&tmp_buff[i].buffer, sizeof(char), rem, file);
+                }
+            }
+            char ack = '5';
+            if (pack_rec < buff_l)
+			{
+				for (int i = 1; i < window; i++)
+				{
+					if (pack_nums[i - 1] + 1 != pack_nums[i])
+					{
+						printf("Lost a packet.\n");
+						ack = 48 + pack_nums[i-1];
+                        //printf("Ack: %d\n", ack);
+						break;
+                    }
+                    
+                }
+                packets_left -= pack_rec;
+            } else {
+                    packets_left -= pack_rec;
+            }
+            printf("Packets Left: %d\n", packets_left);
+            sendto(sockfd, &ack, 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
+        }
     }
 
-    FILE *out_file = fopen(nfname, "wb");
-    char *buffer = (char *) malloc (packet_info[1] + 1);
-    char *tmp_buffer = (char *) malloc (1025);
-    char *index = (char *) malloc (1);
     
-    for (int i = 0; i < packet_info[2]; i++) {
-        recvfrom(sockfd, tmp_buffer, 1025, 0, (struct sockaddr*) &serveraddr, &len);
-        strcat(buffer, tmp_buffer);
-//        printf("Temp buf :%s:\n", tmp_buffer);
-        sprintf(index, "%d", i);
-//        printf("Index :%s:\n", index);
-        sendto(sockfd, index, strlen(index) + 1, 0, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
-    }
-    
-    fwrite(buffer, packet_info[1], 1, out_file);
-    
-    free(index);
-    free(tmp_buffer);
-    free(buffer);
-    fclose(out_file);
-    close(sockfd);
+    fclose(file);
+    free(tmp_buff);
+	close(sockfd);
 	return 0;
 }
